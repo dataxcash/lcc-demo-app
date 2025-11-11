@@ -1,0 +1,24 @@
+# Binaries
+/bin/
+/dist/
+
+# Generated code
+**/lcc_gen.go
+
+# Test binary
+*.test
+
+# Output
+*.out
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Local config
+lcc-features.local.yaml
+*.local.yaml
