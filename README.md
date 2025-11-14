@@ -188,14 +188,28 @@ features:
 ## Building
 
 ```bash
-# Generate license wrappers
+# Generate license wrappers (default: Pro profile)
 make generate
 
-# Build application
+# Build default demo binary (Pro product)
 make build
 
-# Run
+# Run default demo
 ./bin/demo-app
+
+# --- Multi-product builds ---
+
+# Basic product (demo-analytics-basic)
+make build-basic
+./bin/demo-basic
+
+# Pro product (demo-analytics-pro)
+make build-pro
+./bin/demo-pro
+
+# Enterprise product (demo-analytics-ent)
+make build-ent
+./bin/demo-ent
 ```
 
 ## Testing

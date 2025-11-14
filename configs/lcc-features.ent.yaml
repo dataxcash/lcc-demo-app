@@ -1,0 +1,48 @@
+sdk:
+  lcc_url: "http://localhost:7086"
+  product_id: "demo-analytics-ent"
+  product_version: "1.0.0"
+
+features:
+  - id: advanced_analytics
+    name: "Advanced Analytics with ML"
+    tier: professional
+    intercept:
+      package: "demo-app/internal/analytics"
+      function: "RunAdvanced"
+    fallback:
+      package: "demo-app/internal/analytics"
+      function: "RunBasic"
+    quota:
+      limit: 100000  # ent: effectively unlimited for demo
+      period: daily
+
+  - id: pdf_export
+    name: "PDF Export"
+    tier: professional
+    intercept:
+      package: "demo-app/internal/export"
+      function: "GeneratePDF"
+    quota:
+      limit: 100000
+      period: daily
+
+  - id: excel_export
+    name: "Excel Export"
+    tier: enterprise
+    intercept:
+      package: "demo-app/internal/export"
+      function: "GenerateExcel"
+    on_deny:
+      action: error
+      message: "Excel export requires Enterprise license"
+
+  - id: scheduled_reports
+    name: "Scheduled Reports"
+    tier: professional
+    intercept:
+      package: "demo-app/internal/reporting"
+      function: "Schedule"
+    quota:
+      limit: 100000
+      period: daily
