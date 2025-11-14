@@ -1,4 +1,4 @@
-.PHONY: all generate build run run-dev test clean \
+.PHONY: all generate build run run-dev test clean regression \
 	build-basic build-pro build-ent generate-basic generate-pro generate-ent
 
 FEATURES_BASIC := configs/lcc-features.basic.yaml
@@ -67,6 +67,10 @@ test-professional:
 test-enterprise:
 	@echo "Testing with enterprise tier..."
 	@LCC_LICENSE_TIER=enterprise go test -v ./...
+
+regression: build
+	@echo "Running end-to-end regression (demo-app + status)..."
+	@go run ./cmd/regression
 
 clean:
 	@echo "Cleaning..."

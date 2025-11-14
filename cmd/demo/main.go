@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -22,10 +25,13 @@ var (
 
 	requestHistoryMu sync.Mutex
 	requestHistory   []time.Time
+
+	statsMu sync.Mutex
+	stats   DemoStats
 )
 
 func main() {
-	fmt.Println("=== LCC Demo Application ===\n")
+	fmt.Println("=== LCC Demo Application ===")
 
 	// Initialize LCC SDK
 	if err := initLCC(); err != nil {
@@ -34,6 +40,9 @@ func main() {
 	defer lccClient.Close()
 
 	fmt.Printf("Instance ID: %s\n\n", lccClient.GetInstanceID())
+
+	// Start status HTTP server in background
+	go startStatusServer()
 
 	// Demo menu
 	for {
@@ -112,16 +121,15 @@ func showMenu() {
 
 func runBasicAnalytics() {
 	fmt.Println("\n[Basic Analytics]")
-	
-	// This feature is always available
+
 	analytics.RunBasic()
 	fmt.Println("✓ Basic analytics completed")
 }
 
 func runAdvancedAnalytics() {
 	fmt.Println("\n[Advanced Analytics]")
-	
-	// 消耗型控制示例：每次运行高级分析消耗 1 次额度
+
+	// Consumption-type control: each advanced analytics run costs 1 credit
 	allowed, remaining, reason, err := lccClient.Consume("advanced_analytics", 1, nil)
 	if err != nil {
 		fmt.Printf("✗ Failed to check feature: %v\n", err)
@@ -133,16 +141,19 @@ func runAdvancedAnalytics() {
 		return
 	}
 
-	// Feature is enabled, use it
 	analytics.RunAdvanced()
+
+	statsMu.Lock()
+	stats.AdvancedCalls++
+	statsMu.Unlock()
 
 	fmt.Printf("✓ Advanced analytics completed (remaining approx: %d)\n", remaining)
 }
 
 func exportToPDF() {
 	fmt.Println("\n[PDF Export]")
-	
-	// 消耗型控制示例：PDF 导出每天最多 N 次（由 LIC/QuotaLimits 决定）
+
+	// Consumption-type control: PDF export quota is defined in license
 	allowed, remaining, reason, err := lccClient.Consume("pdf_export", 1, nil)
 	if err != nil {
 		fmt.Printf("✗ Failed to check feature: %v\n", err)
@@ -158,8 +169,11 @@ func exportToPDF() {
 		return
 	}
 
-	// Feature is enabled, use it
 	export.GeneratePDF("report.pdf")
+
+	statsMu.Lock()
+	stats.PDFExports++
+	statsMu.Unlock()
 
 	fmt.Printf("✓ PDF exported successfully (remaining approx: %d)\n", remaining)
 }
@@ -250,7 +264,7 @@ func showLicenseInfo() {
 		if !status.Enabled {
 			fmt.Printf(" (%s)", status.Reason)
 		}
-		// 展示部分控制上限信息
+		// Show control limits when available
 		if status.MaxCapacity > 0 {
 			fmt.Printf(" [max_capacity=%d]", status.MaxCapacity)
 		}
@@ -270,7 +284,7 @@ func showLicenseInfo() {
 func createProjectDemo() {
 	fmt.Println("\n[State Capacity Demo: Project Count]")
 
-	// 假定每次调用表示创建一个项目
+	// Each call represents creating one more project
 	projectCount++
 
 	allowed, max, reason, err := lccClient.CheckCapacity("capacity.project.count", projectCount)
@@ -285,6 +299,10 @@ func createProjectDemo() {
 		return
 	}
 
+	statsMu.Lock()
+	stats.Projects = projectCount
+	statsMu.Unlock()
+
 	fmt.Printf("✓ Project %d created (max=%d)\n", projectCount, max)
 }
 
@@ -295,6 +313,10 @@ func callDemoAPIDemo() {
 
 	currentTPS := recordRequestAndGetTPS()
 	fmt.Printf("  Current TPS (approx): %.1f\n", currentTPS)
+
+	statsMu.Lock()
+	stats.LastTPS = currentTPS
+	statsMu.Unlock()
 
 	allowed, maxTPS, reason, err := lccClient.CheckTPS("api.v1.demo", currentTPS)
 	if err != nil {
@@ -358,12 +380,86 @@ func simulateConcurrentJobsDemo() {
 			}
 			defer release()
 
+			statsMu.Lock()
+			stats.ConcurrentJobs++
+			statsMu.Unlock()
+
 			fmt.Printf("  Job %d: running...\n", id)
 			time.Sleep(300 * time.Millisecond)
 			fmt.Printf("  Job %d: done\n", id)
+
+			statsMu.Lock()
+			stats.ConcurrentJobs--
+			statsMu.Unlock()
 		}(i + 1)
 	}
 
 	wg.Wait()
 	fmt.Println("  Concurrency demo finished")
+}
+
+// DemoStats captures runtime metrics that the status UI exposes.
+type DemoStats struct {
+	AdvancedCalls  int     `json:"advanced_calls"`
+	PDFExports     int     `json:"pdf_exports"`
+	Projects       int     `json:"projects"`
+	LastTPS        float64 `json:"last_tps"`
+	ConcurrentJobs int     `json:"concurrent_jobs"`
+}
+
+// startStatusServer exposes basic JSON/HTML status for the demo.
+func startStatusServer() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/status/json", handleStatusJSON)
+	mux.HandleFunc("/status", handleStatusHTML)
+
+	addr := os.Getenv("LCC_DEMO_STATUS_ADDR")
+	if addr == "" {
+		addr = ":8080"
+	}
+
+	log.Printf("Status server listening on http://localhost%s/status\n", addr)
+	if err := http.ListenAndServe(addr, mux); err != nil {
+		log.Printf("Status server error: %v", err)
+	}
+}
+
+func handleStatusJSON(w http.ResponseWriter, r *http.Request) {
+	statsMu.Lock()
+	defer statsMu.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(stats)
+}
+
+func handleStatusHTML(w http.ResponseWriter, r *http.Request) {
+	statsMu.Lock()
+	s := stats
+	statsMu.Unlock()
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, `<!DOCTYPE html>
+<html>
+<head>
+  <title>LCC Demo Status</title>
+  <style>
+    body { font-family: sans-serif; background: #0f172a; color: #e5e7eb; padding: 20px; }
+    h1 { margin-bottom: 0.5rem; }
+    .card { background: #020617; border-radius: 8px; padding: 16px; margin-bottom: 12px; border: 1px solid #1f2937; }
+    .label { color: #9ca3af; }
+    .value { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>LCC Demo Status</h1>
+  <div class="card">
+    <div><span class="label">Advanced analytics calls:</span> <span class="value">%d</span></div>
+    <div><span class="label">PDF exports:</span> <span class="value">%d</span></div>
+    <div><span class="label">Projects created:</span> <span class="value">%d</span></div>
+    <div><span class="label">Last TPS (api.v1.demo):</span> <span class="value">%.1f</span></div>
+    <div><span class="label">Concurrent jobs (demo):</span> <span class="value">%d</span></div>
+  </div>
+  <p>JSON endpoint: <code>/status/json</code></p>
+</body>
+</html>`, s.AdvancedCalls, s.PDFExports, s.Projects, s.LastTPS, s.ConcurrentJobs)
 }

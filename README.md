@@ -56,9 +56,34 @@ make run
 
 # Run in development mode (all features unlocked)
 make run-dev
+```
 
-# Run specific demo scenario
-go run cmd/demo/main.go --scenario advanced
+### 3. Status UI & JSON API
+
+When the demo starts, it also launches a small HTTP status server that exposes
+runtime metrics for the four limitation models (consumption / capacity / TPS / concurrency).
+
+- Default address: `http://localhost:8080`
+- HTML status page: `http://localhost:8080/status`
+- JSON API: `http://localhost:8080/status/json`
+
+You can change the listen address/port via environment variable:
+
+```bash
+# Example: run status server on :18080
+LCC_DEMO_STATUS_ADDR=:18080 make run
+```
+
+The JSON response looks like:
+
+```json
+{
+  "advanced_calls": 3,
+  "pdf_exports": 2,
+  "projects": 5,
+  "last_tps": 7.5,
+  "concurrent_jobs": 1
+}
 ```
 
 ## Demo Scenarios
@@ -215,17 +240,18 @@ make build-ent
 ## Testing
 
 ```bash
-# Run all tests
+# Run all tests in the module
 make test
 
-# Test with different license tiers
-make test-basic
-make test-professional
-make test-enterprise
-
-# Test quota limits
-make test-quota
+# Or run only the demo/status tests
+go test ./cmd/demo
 ```
+
+The demo tests include an HTTP-based integration test that:
+
+- Starts the status server on a test port (via `LCC_DEMO_STATUS_ADDR`)
+- Seeds in-memory `DemoStats` values
+- Verifies both `/status/json` and `/status` return the expected metrics
 
 ## Development Workflow
 
