@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runtime Dashboard - LCC Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e5e7eb;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .header-title h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #1f2937;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-bar {
+            background: #020617;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+
+        .stat-value.success {
+            color: #6ee7b7;
+        }
+
+        .stat-value.error {
+            color: #f87171;
+        }
+
+        .stat-value.warning {
+            color: #fbbf24;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        .panel {
+            background: #020617;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 30px;
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 30px;
+        }
+
+        .event-log {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #0f172a;
+            border-left: 3px solid;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .event-item.success {
+            border-color: #6ee7b7;
+        }
+
+        .event-item.error {
+            border-color: #f87171;
+        }
+
+        .event-item.warning {
+            border-color: #fbbf24;
+        }
+
+        .event-item.info {
+            border-color: #60a5fa;
+        }
+
+        .event-time {
+            color: #9ca3af;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .event-message {
+            color: #e5e7eb;
+        }
+
+        .event-code {
+            display: inline-block;
+            background: #1e293b;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #a78bfa;
+            margin-top: 5px;
+        }
+
+        .code-panel {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .code-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #a78bfa;
+            margin-bottom: 15px;
+        }
+
+        pre {
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #e5e7eb;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-running {
+            background: #065f46;
+            color: #6ee7b7;
+        }
+
+        .status-stopped {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .status-idle {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-title">
+                <h1>📊 Live Simulation Dashboard</h1>
+                <p class="subtitle">Real-time license control monitoring <span id="statusBadge" class="status-badge status-idle">Idle</span></p>
+            </div>
+            <div class="controls">
+                <button class="btn btn-secondary" onclick="window.location.href='/configure'">← Configure</button>
+                <button class="btn btn-start" id="startBtn" onclick="startSimulation()">Start</button>
+                <button class="btn btn-stop" id="stopBtn" onclick="stopSimulation()" disabled>Stop</button>
+            </div>
+        </header>
+
+        <div class="status-bar" id="statusBar">
+            <div class="stat-item">
+                <div class="stat-label">Progress</div>
+                <div class="stat-value" id="progress">0 / 0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Success</div>
+                <div class="stat-value success" id="successCount">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Failures</div>
+                <div class="stat-value error" id="failureCount">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Rate Limits</div>
+                <div class="stat-value warning" id="rateLimitCount">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Elapsed</div>
+                <div class="stat-value" id="elapsed">0s</div>
+            </div>
+        </div>
+
+        <div class="layout">
+            <div class="panel">
+                <h2 class="panel-title">
+                    <span>📈</span> Metrics & Visualization
+                </h2>
+
+                <div class="chart-container">
+                    <canvas id="metricsChart"></canvas>
+                </div>
+
+                <div class="code-panel">
+                    <div class="code-title">Current SDK API Call Context</div>
+                    <pre id="codeContext">// Waiting for simulation to start...
+// The SDK calls will be displayed here in real-time</pre>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2 class="panel-title">
+                    <span>📝</span> Event Log
+                </h2>
+                <div class="event-log" id="eventLog">
+                    <div class="event-item info">
+                        <div class="event-time">Waiting...</div>
+                        <div class="event-message">Click Start to begin simulation</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart;
+        let updateInterval;
+        let chartData = {
+            labels: [],
+            successData: [],
+            failureData: []
+        };
+
+        function initChart() {
+            const ctx = document.getElementById('metricsChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'Success',
+                            data: chartData.successData,
+                            borderColor: '#6ee7b7',
+                            backgroundColor: 'rgba(110, 231, 183, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Failures',
+                            data: chartData.failureData,
+                            borderColor: '#f87171',
+                            backgroundColor: 'rgba(248, 113, 113, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e5e7eb' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#1f2937' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#1f2937' }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function startSimulation() {
+            try {
+                const response = await fetch('/api/simulation/start', { method: 'POST' });
+                if (!response.ok) throw new Error('Failed to start simulation');
+
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('statusBadge').textContent = 'Running';
+                document.getElementById('statusBadge').className = 'status-badge status-running';
+
+                updateInterval = setInterval(updateMetrics, 500);
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        async function stopSimulation() {
+            try {
+                await fetch('/api/simulation/stop', { method: 'POST' });
+                clearInterval(updateInterval);
+
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('statusBadge').textContent = 'Stopped';
+                document.getElementById('statusBadge').className = 'status-badge status-stopped';
+            } catch (error) {
+                console.error('Error stopping simulation:', error);
+            }
+        }
+
+        async function updateMetrics() {
+            try {
+                const response = await fetch('/api/simulation/status');
+                const state = await response.json();
+
+                if (!state.running && updateInterval) {
+                    clearInterval(updateInterval);
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    document.getElementById('statusBadge').textContent = 'Completed';
+                    document.getElementById('statusBadge').className = 'status-badge status-stopped';
+                }
+
+                const metrics = state.metrics || {};
+                document.getElementById('progress').textContent = 
+                    `${metrics.current_iteration || 0} / ${metrics.total_iterations || 0}`;
+                document.getElementById('successCount').textContent = metrics.success_count || 0;
+                document.getElementById('failureCount').textContent = metrics.failure_count || 0;
+                document.getElementById('rateLimitCount').textContent = metrics.rate_limit_hits || 0;
+                document.getElementById('elapsed').textContent = `${metrics.elapsed || 0}s`;
+
+                if (metrics.current_iteration > 0 && metrics.current_iteration % 5 === 0) {
+                    chartData.labels.push(metrics.current_iteration);
+                    chartData.successData.push(metrics.success_count);
+                    chartData.failureData.push(metrics.failure_count);
+
+                    if (chartData.labels.length > 20) {
+                        chartData.labels.shift();
+                        chartData.successData.shift();
+                        chartData.failureData.shift();
+                    }
+
+                    chart.update();
+                }
+
+                updateCodeContext(state);
+                await updateEventLog();
+            } catch (error) {
+                console.error('Error updating metrics:', error);
+            }
+        }
+
+        function updateCodeContext(state) {
+            const controls = state.configuration?.enabled_controls || [];
+            let code = '// Active SDK API calls in this simulation:\n\n';
+
+            if (controls.includes('quota')) {
+                code += `// Quota Control Example
+allowed, remaining, reason, err := lccClient.Consume(
+    "advanced_analytics", 
+    1, 
+    nil,
+)
+if !allowed {
+    log.Warn("Quota exceeded", "reason", reason)
+}
+
+`;
+            }
+
+            if (controls.includes('rate_limit')) {
+                code += `// Rate Limiting Example
+allowed, _, reason, err := lccClient.Consume(
+    "pdf_export",
+    1,
+    metadata,
+)
+if !allowed {
+    return ErrRateLimitExceeded
+}
+
+`;
+            }
+
+            if (controls.includes('feature_gate')) {
+                code += `// Feature Gate Example
+status, err := lccClient.CheckFeature("excel_export")
+if !status.Enabled {
+    return ErrFeatureDisabled
+}
+
+`;
+            }
+
+            if (controls.includes('capacity')) {
+                code += `// Capacity Control Example
+allowed, max, reason, err := lccClient.CheckCapacity(
+    "capacity.project.count",
+    currentCount + 1,
+)
+if !allowed {
+    return fmt.Errorf("limit reached: %d/%d", currentCount, max)
+}
+`;
+            }
+
+            document.getElementById('codeContext').textContent = code || '// No controls active';
+        }
+
+        async function updateEventLog() {
+            try {
+                const response = await fetch('/api/simulation/events');
+                const events = await response.json();
+
+                const logContainer = document.getElementById('eventLog');
+                const html = events.slice(-20).reverse().map(event => {
+                    const time = new Date(event.timestamp).toLocaleTimeString();
+                    return `
+                        <div class="event-item ${event.level}">
+                            <div class="event-time">${time}</div>
+                            <div class="event-message">${event.message}</div>
+                            ${event.code ? `<span class="event-code">${event.code}</span>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                if (html) {
+                    logContainer.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error updating event log:', error);
+            }
+        }
+
+        initChart();
+    </script>
+</body>
+</html>

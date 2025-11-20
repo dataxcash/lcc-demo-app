@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure Simulation - LCC Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e5e7eb;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            font-size: 1.1rem;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: #020617;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 30px;
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+            color: #e5e7eb;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-item:hover {
+            background: #1e293b;
+            border-color: #374151;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .checkbox-desc {
+            font-size: 0.85rem;
+            color: #9ca3af;
+            margin-top: 3px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .input-field {
+            flex: 1;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            color: #e5e7eb;
+            font-size: 1rem;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #60a5fa;
+        }
+
+        .code-preview {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .code-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #a78bfa;
+        }
+
+        .code-lang {
+            font-size: 0.85rem;
+            color: #9ca3af;
+            background: #1e293b;
+            padding: 4px 12px;
+            border-radius: 4px;
+        }
+
+        pre {
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .code {
+            color: #e5e7eb;
+        }
+
+        .comment {
+            color: #6b7280;
+        }
+
+        .keyword {
+            color: #c084fc;
+        }
+
+        .function {
+            color: #60a5fa;
+        }
+
+        .string {
+            color: #6ee7b7;
+        }
+
+        .impact-box {
+            background: #1e293b;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .impact-title {
+            font-weight: 600;
+            color: #f59e0b;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .impact-text {
+            color: #d1d5db;
+            font-size: 0.95rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary {
+            background: #1f2937;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #374151;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚙️ Simulation Designer</h1>
+            <p class="subtitle">Configure license control scenarios and preview SDK integration</p>
+        </header>
+
+        <div class="layout">
+            <div class="panel">
+                <h2 class="panel-title">
+                    <span>🎯</span> Simulation Configuration
+                </h2>
+
+                <div class="control-group">
+                    <label class="control-label">License Control Types</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="rate_limit" checked>
+                            <div class="checkbox-label">
+                                <div>Rate Limiting</div>
+                                <div class="checkbox-desc">Control API call frequency (TPS/QPM)</div>
+                            </div>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="quota" checked>
+                            <div class="checkbox-label">
+                                <div>Quota Management</div>
+                                <div class="checkbox-desc">Track consumption against daily/monthly limits</div>
+                            </div>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="feature_gate">
+                            <div class="checkbox-label">
+                                <div>Feature Gating</div>
+                                <div class="checkbox-desc">Tier-based feature access control</div>
+                            </div>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="capacity">
+                            <div class="checkbox-label">
+                                <div>Capacity Control</div>
+                                <div class="checkbox-desc">Limit maximum resources (projects, users)</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Runtime Parameters</label>
+                    <div class="input-group">
+                        <div class="input-row">
+                            <div class="input-field">
+                                <label style="font-size: 0.9rem; color: #9ca3af; margin-bottom: 5px; display: block;">Loop Count</label>
+                                <input type="number" id="loopCount" value="100" min="1" max="1000">
+                            </div>
+                            <div class="input-field">
+                                <label style="font-size: 0.9rem; color: #9ca3af; margin-bottom: 5px; display: block;">Interval (ms)</label>
+                                <input type="number" id="intervalMs" value="500" min="100" max="5000" step="100">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="window.location.href='/discover'">
+                        ← Back
+                    </button>
+                    <button class="btn btn-primary" id="startBtn" onclick="startSimulation()">
+                        Start Simulation →
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2 class="panel-title">
+                    <span>💻</span> Code Integration Preview
+                </h2>
+
+                <div id="codeExamples">
+                    <div class="code-preview">
+                        <div class="code-header">
+                            <span class="code-title">Real Business Function: ProcessDataAnalytics</span>
+                            <span class="code-lang">Go</span>
+                        </div>
+                        <pre><code class="code"><span class="comment">// ProcessDataAnalytics performs advanced ML-based data analysis</span>
+<span class="keyword">func</span> <span class="function">ProcessDataAnalytics</span>(ctx context.Context, dataset *Dataset) error {
+    <span class="comment">// Check license before expensive operation</span>
+    allowed, remaining, reason, err := lccClient.<span class="function">Consume</span>(
+        <span class="string">"advanced_analytics"</span>, <span class="comment">// Feature ID</span>
+        1,                        <span class="comment">// Consume 1 credit</span>
+        <span class="keyword">nil</span>,                     <span class="comment">// Optional metadata</span>
+    )
+    
+    <span class="keyword">if</span> err != <span class="keyword">nil</span> {
+        <span class="keyword">return</span> fmt.<span class="function">Errorf</span>(<span class="string">"license check failed: %w"</span>, err)
+    }
+    
+    <span class="keyword">if</span> !allowed {
+        <span class="comment">// License doesn't permit this operation</span>
+        log.<span class="function">Warn</span>(<span class="string">"Advanced analytics denied"</span>, <span class="string">"reason"</span>, reason)
+        <span class="keyword">return</span> <span class="function">ErrFeatureNotAvailable</span>
+    }
+    
+    <span class="comment">// License check passed, perform analysis</span>
+    result := analytics.<span class="function">RunMLModel</span>(dataset)
+    log.<span class="function">Info</span>(<span class="string">"Analytics completed"</span>, <span class="string">"remaining"</span>, remaining)
+    
+    <span class="keyword">return</span> <span class="keyword">nil</span>
+}</code></pre>
+
+                        <div class="impact-box">
+                            <div class="impact-title">
+                                <span>⚠️</span> Configuration Impact
+                            </div>
+                            <div class="impact-text" id="quotaImpact">
+                                With quota control enabled, after ~1000 calls, the Consume() API will return allowed=false with reason="quota_exceeded"
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="code-preview">
+                        <div class="code-header">
+                            <span class="code-title">Real Business Function: ExportReport</span>
+                            <span class="code-lang">Go</span>
+                        </div>
+                        <pre><code class="code"><span class="comment">// ExportReport generates PDF with rate limiting</span>
+<span class="keyword">func</span> <span class="function">ExportReport</span>(reportID string) error {
+    <span class="comment">// Rate limit check: prevent API abuse</span>
+    allowed, _, reason, err := lccClient.<span class="function">Consume</span>(
+        <span class="string">"pdf_export"</span>,
+        1,
+        map[string]any{<span class="string">"report_id"</span>: reportID},
+    )
+    
+    <span class="keyword">if</span> !allowed {
+        <span class="keyword">if</span> reason == <span class="string">"quota_exceeded"</span> {
+            <span class="keyword">return</span> <span class="function">ErrDailyQuotaExceeded</span>
+        }
+        <span class="keyword">return</span> fmt.<span class="function">Errorf</span>(<span class="string">"export denied: %s"</span>, reason)
+    }
+    
+    <span class="comment">// Generate PDF (expensive operation)</span>
+    pdf := generator.<span class="function">CreatePDF</span>(reportID)
+    <span class="keyword">return</span> pdf.<span class="function">Save</span>()
+}</code></pre>
+
+                        <div class="impact-box">
+                            <div class="impact-title">
+                                <span>⚠️</span> Configuration Impact
+                            </div>
+                            <div class="impact-text" id="rateLimitImpact">
+                                Rate limit will trigger after ~200 iterations (Professional tier quota)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="code-preview">
+                        <div class="code-header">
+                            <span class="code-title">Real Business Function: CreateProject</span>
+                            <span class="code-lang">Go</span>
+                        </div>
+                        <pre><code class="code"><span class="comment">// CreateProject enforces capacity limits</span>
+<span class="keyword">func</span> <span class="function">CreateProject</span>(name string) (*Project, error) {
+    currentCount := db.<span class="function">CountProjects</span>()
+    
+    <span class="comment">// Check if we can create more projects</span>
+    allowed, maxCapacity, reason, err := lccClient.<span class="function">CheckCapacity</span>(
+        <span class="string">"capacity.project.count"</span>,
+        currentCount + 1, <span class="comment">// Desired new count</span>
+    )
+    
+    <span class="keyword">if</span> !allowed {
+        <span class="keyword">return</span> <span class="keyword">nil</span>, fmt.<span class="function">Errorf</span>(
+            <span class="string">"project limit reached: %d/%d (%s)"</span>,
+            currentCount, maxCapacity, reason,
+        )
+    }
+    
+    <span class="comment">// Create project</span>
+    project := &Project{Name: name}
+    db.<span class="function">Save</span>(project)
+    
+    <span class="keyword">return</span> project, <span class="keyword">nil</span>
+}</code></pre>
+
+                        <div class="impact-box">
+                            <div class="impact-title">
+                                <span>⚠️</span> Configuration Impact
+                            </div>
+                            <div class="impact-text" id="capacityImpact">
+                                Capacity control will block creation after reaching license limit (e.g., 50 projects for Pro tier)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateImpactMessages() {
+            const controls = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            const loops = parseInt(document.getElementById('loopCount').value);
+            const interval = parseInt(document.getElementById('intervalMs').value);
+
+            if (controls.includes('quota')) {
+                document.getElementById('quotaImpact').textContent = 
+                    `With ${loops} iterations, quota limits will be tested. Professional tier allows 1000/day for advanced analytics.`;
+            }
+
+            if (controls.includes('rate_limit')) {
+                const estimatedTime = (loops * interval / 1000).toFixed(1);
+                document.getElementById('rateLimitImpact').textContent = 
+                    `${loops} PDF exports over ${estimatedTime}s will test the 200/day quota limit (Professional tier).`;
+            }
+
+            if (controls.includes('capacity')) {
+                document.getElementById('capacityImpact').textContent = 
+                    `Capacity control will block after reaching license limit. Professional tier typically allows 50 projects max.`;
+            }
+        }
+
+        async function startSimulation() {
+            const controls = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            
+            if (controls.length === 0) {
+                alert('Please select at least one control type');
+                return;
+            }
+
+            const config = {
+                enabled_controls: controls,
+                loop_count: parseInt(document.getElementById('loopCount').value),
+                interval_ms: parseInt(document.getElementById('intervalMs').value),
+            };
+
+            try {
+                const btn = document.getElementById('startBtn');
+                btn.disabled = true;
+                btn.textContent = 'Configuring...';
+
+                const response = await fetch('/api/simulation/configure', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to configure simulation');
+                }
+
+                window.location.href = '/runtime';
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('startBtn').textContent = 'Start Simulation →';
+            }
+        }
+
+        document.querySelectorAll('input[type="checkbox"], input[type="number"]').forEach(input => {
+            input.addEventListener('change', updateImpactMessages);
+        });
+
+        updateImpactMessages();
+    </script>
+</body>
+</html>

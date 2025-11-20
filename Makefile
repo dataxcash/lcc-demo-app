@@ -1,5 +1,6 @@
 .PHONY: all generate build run run-dev test clean regression \
-	build-basic build-pro build-ent generate-basic generate-pro generate-ent
+	build-basic build-pro build-ent generate-basic generate-pro generate-ent \
+	demo build-demo run-demo
 
 FEATURES_BASIC := configs/lcc-features.basic.yaml
 FEATURES_PRO   := configs/lcc-features.pro.yaml
@@ -81,3 +82,16 @@ deps:
 	@echo "Downloading dependencies..."
 	@go mod download
 	@go mod tidy
+
+# --- Web Demo ---
+
+demo: run-demo
+
+build-demo:
+	@echo "Building web demo..."
+	@go build -o bin/web ./cmd/web
+
+run-demo: build-demo
+	@echo "Starting LCC Web Demo..."
+	@echo "Navigate to http://localhost:9144"
+	@./bin/web

@@ -9,6 +9,21 @@ This demo shows:
 - ✅ Tier-based authorization
 - ✅ Usage reporting
 
+## 🌟 New: Interactive Web Demo
+
+**Visual, three-stage interactive demonstration** of LCC SDK capabilities:
+
+1. **Product Discovery** - Compare Basic/Pro/Enterprise editions with feature matrices
+2. **Configuration Designer** - Set up simulations with real SDK code examples
+3. **Runtime Dashboard** - Monitor live metrics with real-time charts
+
+```bash
+make demo
+# Navigate to http://localhost:9144/discover
+```
+
+See [Web Demo Documentation](cmd/webdemo/README.md) for details.
+
 ## Architecture
 
 ```
@@ -294,7 +309,7 @@ lcc-sdk validate lcc-features.yaml
 
 ## Learn More
 
-- [LCC SDK Documentation](https://github.com/yourorg/lcc-sdk)
+- [LCC SDK Documentation (Demo Overview)](docs/LCC_SDK_DOCUMENTATION.md)
 - [Tutorial: Step-by-step Guide](docs/TUTORIAL.md)
 - [Architecture Deep Dive](docs/ARCHITECTURE.md)
 

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discover Products - LCC Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e5e7eb;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            font-size: 1.1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #1f2937;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: #e5e7eb;
+            background: #1f2937;
+        }
+
+        .tab.active {
+            color: #60a5fa;
+            border-bottom-color: #60a5fa;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .product-card {
+            background: #020617;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .product-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .tier-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tier-basic {
+            background: #065f46;
+            color: #6ee7b7;
+        }
+
+        .tier-professional {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .tier-enterprise {
+            background: #581c87;
+            color: #d8b4fe;
+        }
+
+        .product-name {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .product-desc {
+            color: #9ca3af;
+            font-size: 1.1rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .feature-section {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .feature-item:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            font-size: 1.2rem;
+            margin-top: 2px;
+        }
+
+        .feature-available {
+            color: #6ee7b7;
+        }
+
+        .feature-unavailable {
+            color: #6b7280;
+        }
+
+        .feature-details {
+            flex: 1;
+        }
+
+        .feature-name {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .feature-desc {
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+
+        .limitations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .limit-item {
+            display: flex;
+            flex-direction: column;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 3px solid #60a5fa;
+        }
+
+        .limit-label {
+            font-size: 0.85rem;
+            color: #9ca3af;
+            margin-bottom: 5px;
+        }
+
+        .limit-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #e5e7eb;
+        }
+
+        .license-preview {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+            margin-top: 20px;
+        }
+
+        .license-preview pre {
+            color: #a78bfa;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .action-section {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: #1f2937;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #374151;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #9ca3af;
+        }
+
+        .spinner {
+            border: 3px solid #1f2937;
+            border-top: 3px solid #60a5fa;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 License Control Center - Product Catalog</h1>
+            <p class="subtitle">Discover and compare licensing tiers with feature details</p>
+        </header>
+
+        <div class="tabs" id="productTabs">
+            <button class="tab active" data-product="0">Basic Edition</button>
+            <button class="tab" data-product="1">Professional Edition</button>
+            <button class="tab" data-product="2">Enterprise Edition</button>
+        </div>
+
+        <div id="productsContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading product information...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let products = [];
+        let selectedProductIndex = 0;
+
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                products = await response.json();
+                renderProduct(0);
+            } catch (error) {
+                document.getElementById('productsContainer').innerHTML = 
+                    `<div class="product-card"><p style="color: #ef4444;">Failed to load products: ${error.message}</p></div>`;
+            }
+        }
+
+        function renderProduct(index) {
+            selectedProductIndex = index;
+            const product = products[index];
+            if (!product) return;
+
+            const html = `
+                <div class="tab-content active">
+                    <div class="product-card">
+                        <div class="product-header">
+                            <div class="product-title">
+                                <span class="tier-badge tier-${product.tier}">${product.tier}</span>
+                                <h2 class="product-name">${product.name}</h2>
+                            </div>
+                        </div>
+                        <p class="product-desc">${product.description}</p>
+
+                        <div class="features-grid">
+                            <div class="feature-section">
+                                <h3 class="section-title">
+                                    <span>✨</span> Features & Capabilities
+                                </h3>
+                                ${product.features.map(f => `
+                                    <div class="feature-item">
+                                        <span class="feature-icon ${f.available ? 'feature-available' : 'feature-unavailable'}">
+                                            ${f.available ? '✓' : '✗'}
+                                        </span>
+                                        <div class="feature-details">
+                                            <div class="feature-name">${f.name}</div>
+                                            <div class="feature-desc">${f.description}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <div class="feature-section">
+                                <h3 class="section-title">
+                                    <span>📊</span> Limitations & Quotas
+                                </h3>
+                                <div class="limitations">
+                                    ${product.limitations.map(l => `
+                                        <div class="limit-item">
+                                            <div class="limit-label">${l.name}</div>
+                                            <div class="limit-value">${l.value}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="license-preview">
+                            <h3 class="section-title">📄 License Configuration Preview</h3>
+                            <pre>{
+  "product_id": "${product.id}",
+  "tier": "${product.tier}",
+  "features": {
+    "advanced_analytics": ${product.tier !== 'basic'},
+    "pdf_export": ${product.tier !== 'basic'},
+    "excel_export": ${product.tier === 'enterprise'}
+  },
+  "limitations": {
+    "api_quota": "${product.limitations.find(l => l.name.includes('API'))?.value || 'N/A'}",
+    "concurrent_users": "${product.limitations.find(l => l.name.includes('Concurrent'))?.value || 'N/A'}"
+  }
+}</pre>
+                        </div>
+
+                        <div class="action-section">
+                            <button class="btn btn-secondary" onclick="viewComparison()">
+                                Compare All Tiers
+                            </button>
+                            <button class="btn btn-primary" onclick="selectProduct('${product.id}')">
+                                Select & Configure Demo →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('productsContainer').innerHTML = html;
+        }
+
+        async function selectProduct(productId) {
+            try {
+                const btn = event.target;
+                btn.disabled = true;
+                btn.textContent = 'Registering license...';
+
+                const response = await fetch('/api/products/select', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: productId })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to select product');
+                }
+
+                const result = await response.json();
+                console.log('Product selected:', result);
+
+                // Navigate to configuration page
+                window.location.href = '/configure';
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                event.target.disabled = false;
+                event.target.textContent = 'Select & Configure Demo →';
+            }
+        }
+
+        function viewComparison() {
+            alert('Comparison view coming soon!\n\nFor now, use the tabs above to switch between products.');
+        }
+
+        // Tab switching
+        document.getElementById('productTabs').addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab')) {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                const index = parseInt(e.target.dataset.product);
+                renderProduct(index);
+            }
+        });
+
+        // Load products on page load
+        loadProducts();
+    </script>
+</body>
+</html>
