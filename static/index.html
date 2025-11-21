@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LCC SDK Interactive Learning Demo</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-content">
+            <h1 class="app-title">🎓 LCC SDK Interactive Learning Demo</h1>
+            <nav class="step-indicator">
+                <button class="step" data-page="welcome">
+                    <span class="step-number">1</span>
+                    <span class="step-name">Welcome</span>
+                </button>
+                <button class="step" data-page="tiers">
+                    <span class="step-number">2</span>
+                    <span class="step-name">Tiers</span>
+                </button>
+                <button class="step" data-page="limits">
+                    <span class="step-number">3</span>
+                    <span class="step-name">Limits</span>
+                </button>
+                <button class="step" data-page="setup">
+                    <span class="step-number">4</span>
+                    <span class="step-name">Setup</span>
+                </button>
+                <button class="step" data-page="runtime">
+                    <span class="step-number">5</span>
+                    <span class="step-name">Runtime</span>
+                </button>
+            </nav>
+            <div class="lcc-status">
+                <span class="status-indicator"></span>
+                <span class="status-text">Disconnected</span>
+            </div>
+        </div>
+    </header>
+
+    <main id="app" class="app-main">
+        <!-- Dynamic content loaded here -->
+    </main>
+
+    <footer class="app-footer">
+        <div class="footer-content">
+            <button id="btn-back" class="btn btn-secondary">← Back</button>
+            <div class="footer-actions">
+                <button id="btn-help" class="btn btn-secondary">Help</button>
+                <button id="btn-reset" class="btn btn-secondary">Reset</button>
+            </div>
+            <button id="btn-next" class="btn btn-primary">Next →</button>
+        </div>
+    </footer>
+
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/pages/welcome.js"></script>
+    <script src="/static/js/pages/tiers.js"></script>
+    <script src="/static/js/pages/limits.js"></script>
+    <script src="/static/js/pages/setup.js"></script>
+    <script src="/static/js/pages/runtime.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

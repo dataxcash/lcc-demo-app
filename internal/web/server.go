@@ -41,11 +41,17 @@ func NewServer() *Server {
 func (s *Server) Router() http.Handler { return s.mux }
 
 func (s *Server) routes() {
-	s.mux.HandleFunc("/", s.handleIndex)
-	// HTML pages
+	// New SPA UI
+	s.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	s.mux.HandleFunc("/", s.handleSPA)
+	
+	// Old HTML pages (kept for backwards compatibility)
+	s.mux.HandleFunc("/old/", s.handleIndex)
 	s.mux.HandleFunc("/product/", s.handleProductPage)
+	
 	// API
 	s.mux.HandleFunc("/api/config", s.handleConfig)
+	s.mux.HandleFunc("/api/config/validate", s.handleConfigValidate)
 	s.mux.HandleFunc("/api/products", s.handleProducts)
 	s.mux.HandleFunc("/api/features", s.handleFeatures)
 	s.mux.HandleFunc("/api/sim/products", s.handleSimSelectProducts)
@@ -65,14 +71,29 @@ type setConfigResp struct {
 	LCCURL string `json:"lcc_url"`
 }
 
+func (s *Server) handleSPA(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+	http.ServeFile(w, r, "static/index.html")
+}
+
 func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	switch r.Method {
 	case http.MethodGet:
 		s.mu.RLock()
-		cfg := setConfigResp{OK: true, LCCURL: s.lccURL}
+		url := s.lccURL
+		if url == "" {
+			url = "http://localhost:7086"
+		}
 		s.mu.RUnlock()
-		_ = json.NewEncoder(w).Encode(&cfg)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"lcc_url":    url,
+			"saved_at":   time.Now().Format(time.RFC3339),
+			"is_default": s.lccURL == "",
+		})
 	case http.MethodPost:
 		var req setConfigReq
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -97,6 +118,50 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
+}
+
+type validateConfigResp struct {
+	Reachable     bool   `json:"reachable"`
+	Version       string `json:"version,omitempty"`
+	ProductsCount int    `json:"products_count,omitempty"`
+	Error         string `json:"error,omitempty"`
+}
+
+func (s *Server) handleConfigValidate(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	s.mu.RLock()
+	lccURL := s.lccURL
+	s.mu.RUnlock()
+	
+	if lccURL == "" {
+		lccURL = "http://localhost:7086"
+	}
+
+	base := strings.TrimRight(lccURL, "/") + "/api/v1/public"
+	pc := NewPublicServiceClient(base)
+	
+	products, err := pc.ListProducts(r.Context())
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(&validateConfigResp{
+			Reachable: false,
+			Error:     err.Error(),
+		})
+		return
+	}
+	
+	// Try to determine version (you can enhance this based on actual LCC API)
+	version := "v2.1.0" // default for now
+	
+	_ = json.NewEncoder(w).Encode(&validateConfigResp{
+		Reachable:     true,
+		Version:       version,
+		ProductsCount: len(products),
+	})
 }
 
 func (s *Server) handleProducts(w http.ResponseWriter, r *http.Request) {
