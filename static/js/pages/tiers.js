@@ -1,15 +1,274 @@
 const TiersPage = {
+    tiers: null,
+    currentTier: 'professional',
+    
     async render() {
         const app = document.getElementById('app');
         app.innerHTML = `
             <div class="page-container page-enter-active">
-                <h1 style="font-size: var(--text-2xl); color: var(--text-secondary);">
-                    📚 Lesson 1: Understanding License Tiers
-                </h1>
-                <div class="card mt-4">
-                    <p>Tiers page - Coming in Week 2</p>
+                <div class="text-center mb-6">
+                    <h1 style="font-size: var(--text-3xl); margin-bottom: var(--space-4); color: var(--text-secondary);">
+                        📚 Lesson 1: Understanding License Tiers
+                    </h1>
+                    <p style="font-size: var(--text-lg); color: var(--text-muted); max-width: 800px; margin: 0 auto;">
+                        License tiers control WHICH features are available to different customer segments.
+                        Higher tiers unlock more capabilities - this is the foundation of monetization.
+                    </p>
+                </div>
+
+                <div class="card mb-4">
+                    <h3 class="card-title">Product: Data Insight Analytics Platform</h3>
+                    
+                    <div class="mb-4">
+                        <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4);">
+                            <button class="tier-tab" data-tier="basic">Basic</button>
+                            <button class="tier-tab active" data-tier="professional">Professional</button>
+                            <button class="tier-tab" data-tier="enterprise">Enterprise</button>
+                        </div>
+                    </div>
+
+                    <div id="tier-comparison-table"></div>
+                </div>
+
+                <div class="card mb-4">
+                    <h3 class="card-title">How It Works (<span id="current-tier-name">Professional</span> Tier)</h3>
+                    
+                    <div style="margin-bottom: var(--space-4);">
+                        <h4 style="font-size: var(--text-lg); color: var(--text-secondary); margin-bottom: var(--space-3);">
+                            📄 License File Configuration:
+                        </h4>
+                        <pre id="license-json" style="background: #0d1117; border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-4); overflow-x: auto; color: var(--text-primary); font-family: var(--font-mono); font-size: 14px; line-height: 1.6;"></pre>
+                    </div>
+
+                    <div style="margin-bottom: var(--space-4);">
+                        <h4 style="font-size: var(--text-lg); color: var(--text-secondary); margin-bottom: var(--space-3);">
+                            💻 SDK Integration Code:
+                        </h4>
+                        <pre style="background: #0d1117; border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-4); overflow-x: auto; color: var(--text-primary); font-family: var(--font-mono); font-size: 14px; line-height: 1.6;"><code class="language-go">// Business function that requires Excel export
+func ExportToExcel(reportID string) error {
+    // Step 1: Check if feature is enabled
+    status, err := lccClient.CheckFeature(
+        "excel_export"
+    )
+    if err != nil {
+        return fmt.Errorf("license check: %w", err)
+    }
+
+    // Step 2: Handle denial
+    if !status.Enabled {
+        return fmt.Errorf(
+            "Excel export requires Enterprise tier"
+        )
+    }
+
+    // Step 3: Execute business logic
+    return generateExcelReport(reportID)
+}</code></pre>
+                    </div>
+
+                    <div>
+                        <h4 style="font-size: var(--text-lg); color: var(--text-secondary); margin-bottom: var(--space-3);">
+                            ⚙️ Developer Configuration (lcc-features.yaml):
+                        </h4>
+                        <div style="background: #0d1117; border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-4); overflow-x: auto;">
+                            <pre id="yaml-config" style="color: var(--text-primary); font-family: var(--font-mono); font-size: 14px; line-height: 1.6; margin: 0;"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <h3 class="card-title">Try It Yourself</h3>
+                    <p style="color: var(--text-muted); margin-bottom: var(--space-4);">
+                        Simulate calling different features:
+                    </p>
+                    
+                    <div style="display: flex; gap: var(--space-3); margin-bottom: var(--space-4); align-items: center;">
+                        <label style="font-weight: var(--weight-medium);">Feature:</label>
+                        <select id="feature-select" class="form-input" style="width: 250px;">
+                            <option value="">-- Select a feature --</option>
+                        </select>
+                        <button id="btn-check-feature" class="btn btn-primary">Call CheckFeature()</button>
+                    </div>
+
+                    <div id="check-result" class="hidden">
+                        <h4 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">Result:</h4>
+                        <pre id="result-json" style="background: #0d1117; border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-4); overflow-x: auto; color: var(--text-primary); font-family: var(--font-mono); font-size: 14px;"></pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">📝 Key Concepts</h3>
+                    <ul style="list-style: none; padding: 0; color: var(--text-primary);">
+                        <li style="margin-bottom: var(--space-2);">• <strong>Tier</strong> = Customer segment (Basic/Pro/Enterprise)</li>
+                        <li style="margin-bottom: var(--space-2);">• <strong>Feature ID</strong> = Unique identifier (e.g., "excel_export")</li>
+                        <li style="margin-bottom: var(--space-2);">• <strong>CheckFeature()</strong> = SDK API to gate business logic</li>
+                        <li style="margin-bottom: var(--space-2);">• <strong>License file</strong> = Server-managed, ISV applies to customer</li>
+                        <li style="margin-bottom: var(--space-2);">• <strong>YAML config</strong> = Developer-defined, compiled into app</li>
+                        <li style="margin-bottom: var(--space-2);">• <strong>Enabled flag</strong> = Authoritative control from license</li>
+                    </ul>
                 </div>
             </div>
         `;
+
+        await this.init();
+    },
+
+    async init() {
+        await this.loadTiers();
+        this.attachEventListeners();
+        this.updateTierDisplay();
+    },
+
+    async loadTiers() {
+        try {
+            this.tiers = await Utils.fetchAPI('/api/tiers');
+        } catch (error) {
+            console.error('Failed to load tiers:', error);
+            Utils.showAlert('error', 'Failed to load tier information');
+        }
+    },
+
+    attachEventListeners() {
+        const tierTabs = document.querySelectorAll('.tier-tab');
+        tierTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                this.currentTier = tab.dataset.tier;
+                this.updateTierDisplay();
+            });
+        });
+
+        const btnCheck = document.getElementById('btn-check-feature');
+        if (btnCheck) {
+            btnCheck.addEventListener('click', () => this.checkFeature());
+        }
+    },
+
+    async updateTierDisplay() {
+        this.updateTabs();
+        this.updateComparisonTable();
+        await this.updateLicenseJSON();
+        await this.updateYAML();
+        this.updateFeatureSelect();
+    },
+
+    updateTabs() {
+        document.querySelectorAll('.tier-tab').forEach(tab => {
+            if (tab.dataset.tier === this.currentTier) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+
+        const tier = this.getTierData(this.currentTier);
+        const tierNameElement = document.getElementById('current-tier-name');
+        if (tierNameElement && tier) {
+            tierNameElement.textContent = tier.name;
+        }
+    },
+
+    updateComparisonTable() {
+        if (!this.tiers) return;
+
+        const features = [
+            { id: 'basic_reports', name: 'Basic Reports' },
+            { id: 'ml_analytics', name: 'ML Analytics' },
+            { id: 'pdf_export', name: 'PDF Export' },
+            { id: 'excel_export', name: 'Excel Export' },
+            { id: 'custom_dashboard', name: 'Custom Dashboard' },
+            { id: 'api_access', name: 'API Access' }
+        ];
+
+        let html = '<table style="width: 100%; border-collapse: collapse;">';
+        html += '<thead><tr style="border-bottom: 2px solid var(--border);">';
+        html += '<th style="padding: var(--space-3); text-align: left; color: var(--text-secondary);">Feature</th>';
+        this.tiers.forEach(tier => {
+            html += `<th style="padding: var(--space-3); text-align: center; color: var(--text-secondary);">${tier.name}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        features.forEach(feature => {
+            html += '<tr style="border-bottom: 1px solid var(--border);">';
+            html += `<td style="padding: var(--space-3); color: var(--text-primary);">${feature.name}</td>`;
+            this.tiers.forEach(tier => {
+                const tierFeature = tier.features[feature.id];
+                const enabled = tierFeature?.enabled;
+                html += `<td style="padding: var(--space-3); text-align: center; color: ${enabled ? 'var(--success)' : 'var(--error)'};">`;
+                html += enabled ? '✓' : '✗';
+                html += '</td>';
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('tier-comparison-table').innerHTML = html;
+    },
+
+    async updateLicenseJSON() {
+        try {
+            const license = await Utils.fetchAPI(`/api/tiers/${this.currentTier}/license`);
+            document.getElementById('license-json').textContent = JSON.stringify(license, null, 2);
+        } catch (error) {
+            console.error('Failed to load license:', error);
+        }
+    },
+
+    async updateYAML() {
+        try {
+            const data = await Utils.fetchAPI(`/api/tiers/${this.currentTier}/yaml`);
+            document.getElementById('yaml-config').textContent = data.yaml_content;
+        } catch (error) {
+            console.error('Failed to load YAML:', error);
+        }
+    },
+
+    updateFeatureSelect() {
+        const tier = this.getTierData(this.currentTier);
+        if (!tier) return;
+
+        const select = document.getElementById('feature-select');
+        select.innerHTML = '<option value="">-- Select a feature --</option>';
+
+        Object.keys(tier.features).forEach(featureId => {
+            const feature = tier.features[featureId];
+            const option = document.createElement('option');
+            option.value = featureId;
+            option.textContent = feature.name;
+            select.appendChild(option);
+        });
+    },
+
+    async checkFeature() {
+        const select = document.getElementById('feature-select');
+        const featureId = select.value;
+
+        if (!featureId) {
+            Utils.showAlert('warning', 'Please select a feature first');
+            return;
+        }
+
+        try {
+            const result = await Utils.fetchAPI(`/api/tiers/${this.currentTier}/check-feature`, {
+                method: 'POST',
+                body: JSON.stringify({ feature_id: featureId })
+            });
+
+            document.getElementById('check-result').classList.remove('hidden');
+            const resultElement = document.getElementById('result-json');
+            resultElement.textContent = JSON.stringify(result, null, 2);
+
+            if (result.enabled) {
+                resultElement.style.borderColor = 'var(--success)';
+            } else {
+                resultElement.style.borderColor = 'var(--error)';
+            }
+        } catch (error) {
+            Utils.showAlert('error', `Failed to check feature: ${error.message}`);
+        }
+    },
+
+    getTierData(tierID) {
+        if (!this.tiers) return null;
+        return this.tiers.find(t => t.id === tierID);
     }
 };

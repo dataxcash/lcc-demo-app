@@ -49,9 +49,23 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/old/", s.handleIndex)
 	s.mux.HandleFunc("/product/", s.handleProductPage)
 	
-	// API
+	// API - Configuration
 	s.mux.HandleFunc("/api/config", s.handleConfig)
 	s.mux.HandleFunc("/api/config/validate", s.handleConfigValidate)
+	
+	// API - Tiers (Week 2)
+	s.mux.HandleFunc("/api/tiers", s.handleGetTiers)
+	s.mux.HandleFunc("/api/tiers/basic/license", s.handleGetTierLicense)
+	s.mux.HandleFunc("/api/tiers/professional/license", s.handleGetTierLicense)
+	s.mux.HandleFunc("/api/tiers/enterprise/license", s.handleGetTierLicense)
+	s.mux.HandleFunc("/api/tiers/basic/yaml", s.handleGetTierYAML)
+	s.mux.HandleFunc("/api/tiers/professional/yaml", s.handleGetTierYAML)
+	s.mux.HandleFunc("/api/tiers/enterprise/yaml", s.handleGetTierYAML)
+	s.mux.HandleFunc("/api/tiers/basic/check-feature", s.handleCheckTierFeature)
+	s.mux.HandleFunc("/api/tiers/professional/check-feature", s.handleCheckTierFeature)
+	s.mux.HandleFunc("/api/tiers/enterprise/check-feature", s.handleCheckTierFeature)
+	
+	// API - Products & Simulation
 	s.mux.HandleFunc("/api/products", s.handleProducts)
 	s.mux.HandleFunc("/api/features", s.handleFeatures)
 	s.mux.HandleFunc("/api/sim/products", s.handleSimSelectProducts)

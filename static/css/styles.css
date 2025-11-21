@@ -411,6 +411,31 @@ body {
     color: var(--info);
 }
 
+/* Tier Tab Styles */
+.tier-tab {
+    padding: var(--space-2) var(--space-4);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tier-tab:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent);
+}
+
+.tier-tab.active {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
 /* Utility Classes */
 .text-center {
     text-align: center;
