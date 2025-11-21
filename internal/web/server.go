@@ -65,6 +65,24 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/api/tiers/professional/check-feature", s.handleCheckTierFeature)
 	s.mux.HandleFunc("/api/tiers/enterprise/check-feature", s.handleCheckTierFeature)
 	
+	// API - Limits (Week 3)
+	s.mux.HandleFunc("/api/limits/types", s.handleGetLimitTypes)
+	s.mux.HandleFunc("/api/limits/quota/example", s.handleGetLimitExample)
+	s.mux.HandleFunc("/api/limits/tps/example", s.handleGetLimitExample)
+	s.mux.HandleFunc("/api/limits/capacity/example", s.handleGetLimitExample)
+	s.mux.HandleFunc("/api/limits/concurrency/example", s.handleGetLimitExample)
+	s.mux.HandleFunc("/api/limits/quota/simulate", s.handleSimulateLimitType)
+	s.mux.HandleFunc("/api/limits/tps/simulate", s.handleSimulateLimitType)
+	s.mux.HandleFunc("/api/limits/capacity/simulate", s.handleSimulateLimitType)
+	s.mux.HandleFunc("/api/limits/concurrency/simulate", s.handleSimulateLimitType)
+	
+	// API - Instance (Week 4)
+	s.mux.HandleFunc("/api/instance/register", s.handleInstanceRegister)
+	s.mux.HandleFunc("/api/instance/status", s.handleInstanceStatus)
+	s.mux.HandleFunc("/api/instance/test", s.handleInstanceTest)
+	s.mux.HandleFunc("/api/instance/clear", s.handleInstanceClear)
+	s.mux.HandleFunc("/api/instance/generate-keys", s.handleInstanceGenerateKeys)
+	
 	// API - Products & Simulation
 	s.mux.HandleFunc("/api/products", s.handleProducts)
 	s.mux.HandleFunc("/api/features", s.handleFeatures)
