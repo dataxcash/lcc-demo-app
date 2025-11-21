@@ -40,19 +40,23 @@ Open your browser and navigate to:
 http://localhost:9144/
 ```
 
-## Current Status (Week 1)
+## Current Status (Week 2)
 
 ### ✅ Implemented
 - **Welcome Page**: LCC server configuration and connection testing
+- **Tiers Page**: Interactive tier learning with comparison table
 - **Design System**: Complete dark theme with animations
 - **Navigation**: 5-step indicator and routing system
 - **API Endpoints**:
   - `GET /api/config` - Get configuration
   - `POST /api/config` - Save configuration  
   - `GET /api/config/validate` - Test LCC connection
+  - `GET /api/tiers` - List all tiers
+  - `GET /api/tiers/{tier}/license` - Get license JSON
+  - `GET /api/tiers/{tier}/yaml` - Get YAML config
+  - `POST /api/tiers/{tier}/check-feature` - Check feature
 
 ### 🚧 Coming Soon
-- **Week 2**: Tier Learning page (Basic/Pro/Enterprise comparison)
 - **Week 3**: Limits Learning page (Quota/TPS/Capacity/Concurrency)
 - **Week 4**: Instance Setup page (Simulation configuration)
 - **Week 5**: Runtime Dashboard (Live metrics and monitoring)
@@ -97,7 +101,7 @@ lcc-demo-app/
 │       ├── utils.js        # Helpers
 │       └── pages/
 │           ├── welcome.js  # Week 1 ✅
-│           ├── tiers.js    # Week 2 🚧
+│           ├── tiers.js    # Week 2 ✅
 │           ├── limits.js   # Week 3 🚧
 │           ├── setup.js    # Week 4 🚧
 │           └── runtime.js  # Week 5 🚧
@@ -211,12 +215,12 @@ curl -X POST http://localhost:9144/api/config \
 
 See [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) for the complete 5-week roadmap.
 
-Week 2 will add the **Tier Learning** page with:
-- Three-tier product comparison (Basic/Pro/Enterprise)
-- Interactive tier switching
-- SDK code examples
-- Feature availability matrix
-- "Try It Yourself" simulator
+Week 3 will add the **Limits Learning** page with:
+- Four limit types (Quota/TPS/Capacity/Concurrency)
+- Tab-based navigation for each type
+- Detailed explanations and use cases
+- Code examples for each limit type
+- Interactive mini-simulators
 
 ## Support
 
@@ -227,6 +231,6 @@ For issues or questions:
 
 ---
 
-**Version:** 1.0.0 (Week 1)  
+**Version:** 1.1.0 (Week 2)  
 **Last Updated:** 2025-11-21  
-**Status:** Foundation Complete ✅
+**Status:** Week 1-2 Complete ✅
