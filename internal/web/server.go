@@ -83,6 +83,9 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/api/instance/clear", s.handleInstanceClear)
 	s.mux.HandleFunc("/api/instance/generate-keys", s.handleInstanceGenerateKeys)
 	
+	// API - Simulation (Week 5)
+	s.mux.HandleFunc("/api/simulation/", s.handleSimulationRoot)
+	
 	// API - Products & Simulation
 	s.mux.HandleFunc("/api/products", s.handleProducts)
 	s.mux.HandleFunc("/api/features", s.handleFeatures)
