@@ -24,7 +24,7 @@ const LimitsPage = {
                         <button class="limit-type-tab" data-type="concurrency">4️⃣ Concurrency</button>
                     </div>
 
-                    <div id="limit-type-content"></div>
+                    <div id="limit-type-content" style="min-height: 600px; transition: opacity 0.2s ease-in-out;"></div>
                 </div>
 
                 <div class="card">

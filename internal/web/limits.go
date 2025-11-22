@@ -16,7 +16,7 @@ var AllLimitTypes = []LimitType{
 	{
 		Type:        "quota",
 		Name:        "Quota Control",
-		Title:       "Quota (配额控制)",
+		Title:       "Quota Control",
 		Description: "Cumulative consumption limit that resets on schedule. Server tracks total usage automatically.",
 		SDKAPI:      "Consume(featureID, amount)",
 		Tracking:    "Server-side automatic",
@@ -32,7 +32,7 @@ var AllLimitTypes = []LimitType{
 	{
 		Type:        "tps",
 		Name:        "TPS (Rate Limit)",
-		Title:       "TPS (速率限制)",
+		Title:       "TPS (Rate Limit)",
 		Description: "Instantaneous throughput limit. Controls requests per second.",
 		SDKAPI:      "CheckTPS(featureID, currentTPS)",
 		Tracking:    "Client calculates current rate",
@@ -48,7 +48,7 @@ var AllLimitTypes = []LimitType{
 	{
 		Type:        "capacity",
 		Name:        "Capacity Limit",
-		Title:       "Capacity (容量限制)",
+		Title:       "Capacity Limit",
 		Description: "Maximum quantity of persistent resources. Controls how many items can exist.",
 		SDKAPI:      "CheckCapacity(featureID, currentUsed)",
 		Tracking:    "Client counts current usage",
@@ -64,7 +64,7 @@ var AllLimitTypes = []LimitType{
 	{
 		Type:        "concurrency",
 		Name:        "Concurrency Limit",
-		Title:       "Concurrency (并发限制)",
+		Title:       "Concurrency Limit",
 		Description: "Simultaneous execution slots. Controls how many operations can run at the same time.",
 		SDKAPI:      "AcquireSlot(featureID) → returns release()",
 		Tracking:    "SDK internal counter",
