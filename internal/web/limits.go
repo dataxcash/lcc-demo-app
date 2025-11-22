@@ -107,12 +107,20 @@ func GetLimitExample(limitType string) *LimitExample {
 	case "quota":
 		return &LimitExample{
 			LicenseConfig: `{
-  "ml_analytics": {
-    "enabled": true,
+  "product_id": "data-insight-pro",
+  "tier": "professional",
+  "features": {
+    "ml_analytics": { "enabled": true },
+    "pdf_export": { "enabled": true },
+    "api_access": { "enabled": true }
+  },
+  "limits": {
     "quota": {
-      "max": 10000,         // Total allowed
-      "window": "daily",    // Reset period
-      "reset_at": "00:00"   // Reset time (UTC)
+      "max": 50000,           // Product-level quota
+      "used": 0,              // Shared by all features
+      "remaining": 50000,
+      "window": "monthly",    // Reset period
+      "reset_at": "2025-02-01T00:00:00Z"
     }
   }
 }`,
@@ -142,12 +150,13 @@ func GetLimitExample(limitType string) *LimitExample {
     return nil
 }`,
 			BehaviorTable: []BehaviorRow{
-				{Call: "1", Allowed: "✓ Yes", Remaining: "9,999", Reason: "ok"},
-				{Call: "100", Allowed: "✓ Yes", Remaining: "9,900", Reason: "ok"},
-				{Call: "9,999", Allowed: "✓ Yes", Remaining: "1", Reason: "ok"},
-				{Call: "10,000", Allowed: "✓ Yes", Remaining: "0", Reason: "ok"},
-				{Call: "10,001", Allowed: "❌ No", Remaining: "0", Reason: "exceeded"},
-				{Call: "(Next Day)", Allowed: "✓ Yes", Remaining: "9,999", Reason: "reset"},
+				{Call: "1", Allowed: "✓ Yes", Remaining: "49,999", Reason: "ok"},
+				{Call: "1,000", Allowed: "✓ Yes", Remaining: "49,000", Reason: "ok"},
+				{Call: "25,000", Allowed: "✓ Yes", Remaining: "25,000", Reason: "ok"},
+				{Call: "49,999", Allowed: "✓ Yes", Remaining: "1", Reason: "ok"},
+				{Call: "50,000", Allowed: "✓ Yes", Remaining: "0", Reason: "ok"},
+				{Call: "50,001", Allowed: "❌ No", Remaining: "0", Reason: "exceeded"},
+				{Call: "(Next Month)", Allowed: "✓ Yes", Remaining: "49,999", Reason: "reset"},
 			},
 			KeyPoints: []string{
 				"Server tracks cumulative total automatically",
@@ -159,9 +168,15 @@ func GetLimitExample(limitType string) *LimitExample {
 	case "tps":
 		return &LimitExample{
 			LicenseConfig: `{
-  "api_access": {
-    "enabled": true,
-    "max_tps": 10.0   // Maximum requests per second
+  "product_id": "data-insight-pro",
+  "tier": "professional",
+  "features": {
+    "ml_analytics": { "enabled": true },
+    "pdf_export": { "enabled": true },
+    "api_access": { "enabled": true }
+  },
+  "limits": {
+    "max_tps": 100.0   // Product-level TPS (shared by all features)
   }
 }`,
 			CodeExample: `func HandleAPIRequest() error {
@@ -191,12 +206,12 @@ func GetLimitExample(limitType string) *LimitExample {
     return processRequest()
 }`,
 			BehaviorTable: []BehaviorRow{
-				{Call: "TPS=5.2", Allowed: "✓ Yes", Remaining: "max=10.0", Reason: "ok"},
-				{Call: "TPS=9.8", Allowed: "✓ Yes", Remaining: "max=10.0", Reason: "ok"},
-				{Call: "TPS=10.0", Allowed: "✓ Yes", Remaining: "max=10.0", Reason: "ok"},
-				{Call: "TPS=10.5", Allowed: "❌ No", Remaining: "max=10.0", Reason: "exceeded"},
-				{Call: "TPS=15.0", Allowed: "❌ No", Remaining: "max=10.0", Reason: "exceeded"},
-				{Call: "(Next Sec)", Allowed: "✓ Yes", Remaining: "max=10.0", Reason: "ok (rate dropped)"},
+				{Call: "TPS=50.5", Allowed: "✓ Yes", Remaining: "max=100.0", Reason: "ok"},
+				{Call: "TPS=95.3", Allowed: "✓ Yes", Remaining: "max=100.0", Reason: "ok"},
+				{Call: "TPS=100.0", Allowed: "✓ Yes", Remaining: "max=100.0", Reason: "ok"},
+				{Call: "TPS=100.5", Allowed: "❌ No", Remaining: "max=100.0", Reason: "exceeded"},
+				{Call: "TPS=150.0", Allowed: "❌ No", Remaining: "max=100.0", Reason: "exceeded"},
+				{Call: "(Next Sec)", Allowed: "✓ Yes", Remaining: "max=100.0", Reason: "ok (rate dropped)"},
 			},
 			KeyPoints: []string{
 				"Client measures instantaneous rate (req/sec)",
@@ -208,9 +223,14 @@ func GetLimitExample(limitType string) *LimitExample {
 	case "capacity":
 		return &LimitExample{
 			LicenseConfig: `{
-  "projects": {
-    "enabled": true,
-    "max_capacity": 50   // Maximum total projects
+  "product_id": "data-insight-enterprise",
+  "tier": "enterprise",
+  "features": {
+    "custom_dashboard": { "enabled": true },
+    "projects": { "enabled": true }
+  },
+  "limits": {
+    "max_capacity": 100   // Product-level capacity (shared resources)
   }
 }`,
 			CodeExample: `func CreateProject(name string) error {
@@ -243,12 +263,12 @@ func GetLimitExample(limitType string) *LimitExample {
     return db.CreateProject(name)
 }`,
 			BehaviorTable: []BehaviorRow{
-				{Call: "count=10", Allowed: "✓ Yes", Remaining: "max=50", Reason: "ok"},
-				{Call: "count=25", Allowed: "✓ Yes", Remaining: "max=50", Reason: "ok"},
-				{Call: "count=49", Allowed: "✓ Yes", Remaining: "max=50", Reason: "ok"},
-				{Call: "count=50", Allowed: "❌ No", Remaining: "max=50", Reason: "at_limit"},
-				{Call: "count=51", Allowed: "❌ No", Remaining: "max=50", Reason: "exceeded"},
-				{Call: "(After Delete)", Allowed: "✓ Yes", Remaining: "max=50", Reason: "ok (space freed)"},
+				{Call: "count=10", Allowed: "✓ Yes", Remaining: "max=100", Reason: "ok"},
+				{Call: "count=50", Allowed: "✓ Yes", Remaining: "max=100", Reason: "ok"},
+				{Call: "count=99", Allowed: "✓ Yes", Remaining: "max=100", Reason: "ok"},
+				{Call: "count=100", Allowed: "❌ No", Remaining: "max=100", Reason: "at_limit"},
+				{Call: "count=101", Allowed: "❌ No", Remaining: "max=100", Reason: "exceeded"},
+				{Call: "(After Delete)", Allowed: "✓ Yes", Remaining: "max=100", Reason: "ok (space freed)"},
 			},
 			KeyPoints: []string{
 				"Client counts persistent resources",
@@ -260,9 +280,14 @@ func GetLimitExample(limitType string) *LimitExample {
 	case "concurrency":
 		return &LimitExample{
 			LicenseConfig: `{
-  "concurrent_users": {
-    "enabled": true,
-    "max_concurrency": 10   // Max simultaneous slots
+  "product_id": "data-insight-pro",
+  "tier": "professional",
+  "features": {
+    "api_access": { "enabled": true },
+    "concurrent_sessions": { "enabled": true }
+  },
+  "limits": {
+    "max_concurrency": 10   // Product-level concurrency (all features share)
   }
 }`,
 			CodeExample: `func HandleUserSession(userID string) error {
