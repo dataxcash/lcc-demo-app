@@ -254,35 +254,88 @@ func GetTierByID(tierID string) *TierDefinition {
 // GetLicenseJSON returns the license JSON for a tier
 func GetLicenseJSON(tier *TierDefinition) map[string]interface{} {
 	features := make(map[string]interface{})
+	limits := make(map[string]interface{})
 	
+	// Features only contain enabled/disabled status
 	for id, feature := range tier.Features {
-		featureData := map[string]interface{}{
+		features[id] = map[string]interface{}{
 			"enabled": feature.Enabled,
 		}
+	}
+	
+	// Limits are product-level configurations
+	// Multiple limits can exist at product level
+	switch tier.ID {
+	case "basic":
+		// Basic tier has no limits
+		limits = map[string]interface{}{}
 		
-		if feature.Quota != nil {
-			featureData["quota"] = map[string]interface{}{
-				"max":      feature.Quota.Max,
-				"used":     0,
-				"remaining": feature.Quota.Max,
-				"window":   feature.Quota.Window,
-				"reset_at": "2025-01-22T00:00:00Z",
-			}
+	case "professional":
+		limits = map[string]interface{}{
+			"quota": map[string]interface{}{
+				"ml_analytics": map[string]interface{}{
+					"max":      10000,
+					"used":     0,
+					"remaining": 10000,
+					"window":   "daily",
+					"reset_at": "2025-01-22T00:00:00Z",
+				},
+				"pdf_export": map[string]interface{}{
+					"max":      200,
+					"used":     0,
+					"remaining": 200,
+					"window":   "daily",
+					"reset_at": "2025-01-22T00:00:00Z",
+				},
+			},
+			"max_tps": map[string]interface{}{
+				"ml_analytics": 10.0,
+				"pdf_export":   5.0,
+				"api_access":   100.0,
+			},
+			"max_concurrency": map[string]interface{}{
+				"api_access": 10,
+			},
 		}
 		
-		if feature.MaxTPS > 0 {
-			featureData["max_tps"] = feature.MaxTPS
+	case "enterprise":
+		limits = map[string]interface{}{
+			"quota": map[string]interface{}{
+				"ml_analytics": map[string]interface{}{
+					"max":      100000,
+					"used":     0,
+					"remaining": 100000,
+					"window":   "daily",
+					"reset_at": "2025-01-22T00:00:00Z",
+				},
+				"pdf_export": map[string]interface{}{
+					"max":      2000,
+					"used":     0,
+					"remaining": 2000,
+					"window":   "daily",
+					"reset_at": "2025-01-22T00:00:00Z",
+				},
+				"excel_export": map[string]interface{}{
+					"max":      1000,
+					"used":     0,
+					"remaining": 1000,
+					"window":   "daily",
+					"reset_at": "2025-01-22T00:00:00Z",
+				},
+			},
+			"max_tps": map[string]interface{}{
+				"ml_analytics": 50.0,
+				"pdf_export":   20.0,
+				"excel_export":  10.0,
+				"api_access":   500.0,
+			},
+			"max_capacity": map[string]interface{}{
+				"custom_dashboard": 100,
+			},
+			"max_concurrency": map[string]interface{}{
+				"api_access": 50,
+			},
 		}
-		
-		if feature.MaxCapacity > 0 {
-			featureData["max_capacity"] = feature.MaxCapacity
-		}
-		
-		if feature.MaxConcurrency > 0 {
-			featureData["max_concurrency"] = feature.MaxConcurrency
-		}
-		
-		features[id] = featureData
 	}
 	
 	return map[string]interface{}{
@@ -293,6 +346,7 @@ func GetLicenseJSON(tier *TierDefinition) map[string]interface{} {
 		"issued_at":    "2025-01-21T00:00:00Z",
 		"expires_at":   "2026-01-21T00:00:00Z",
 		"features":     features,
+		"limits":       limits,
 	}
 }
 
