@@ -17,6 +17,14 @@ import (
 	lccconfig "github.com/yourorg/lcc-sdk/pkg/config"
 )
 
+// Instance represents a registered SDK instance
+type Instance struct {
+	InstanceID   string    `json:"instance_id"`
+	ProductID    string    `json:"product_id"`
+	Version      string    `json:"version"`
+	RegisteredAt time.Time `json:"registered_at"`
+}
+
 // Server provides Web UI and API for LCC demo simulation.
 type Server struct {
 	mux *http.ServeMux
@@ -26,12 +34,16 @@ type Server struct {
 	publicBase    string
 	clients       map[string]*lccclient.Client // productID -> client
 	lastProducts  []PublicProduct              // cached latest products listing
+	instances     map[string]*Instance        // instanceID -> Instance (multi-instance support)
+	instanceKeys  map[string]*auth.KeyPair    // instanceID -> KeyPair
 }
 
 func NewServer() *Server {
 	s := &Server{
-		mux:     http.NewServeMux(),
-		clients: make(map[string]*lccclient.Client),
+		mux:           http.NewServeMux(),
+		clients:       make(map[string]*lccclient.Client),
+		instances:     make(map[string]*Instance),
+		instanceKeys:  make(map[string]*auth.KeyPair),
 	}
 	s.routes()
 	s.loadConfig()
@@ -82,6 +94,9 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/api/instance/test", s.handleInstanceTest)
 	s.mux.HandleFunc("/api/instance/clear", s.handleInstanceClear)
 	s.mux.HandleFunc("/api/instance/generate-keys", s.handleInstanceGenerateKeys)
+	
+	// API - Multi-Instance Management
+	s.mux.HandleFunc("/api/instances", s.handleListInstances)
 	
 	// API - Simulation (Week 5)
 	s.mux.HandleFunc("/api/simulation/", s.handleSimulationRoot)

@@ -50,7 +50,8 @@ type TestInstanceResponse struct {
 }
 
 type ClearInstanceRequest struct {
-	ProductID string `json:"product_id"`
+	ProductID  string `json:"product_id"`
+	InstanceID string `json:"instance_id,omitempty"`
 }
 
 type ClearInstanceResponse struct {
@@ -160,16 +161,29 @@ func (s *Server) handleInstanceRegister(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	instanceID := cli.GetInstanceID()
+	registeredAt := time.Now()
+
 	s.mu.Lock()
+	// Store in old map for backward compatibility
 	s.clients[req.ProductID] = cli
+	// Store in new multi-instance map with unique key per product-version
+	instanceKey := fmt.Sprintf("%s:%s:%s", req.ProductID, req.Version, instanceID)
+	s.instances[instanceKey] = &Instance{
+		InstanceID:   instanceID,
+		ProductID:    req.ProductID,
+		Version:      req.Version,
+		RegisteredAt: registeredAt,
+	}
+	s.instanceKeys[instanceKey] = kp
 	s.mu.Unlock()
 
 	_ = json.NewEncoder(w).Encode(&RegisterInstanceResponse{
 		Success:      true,
-		InstanceID:   cli.GetInstanceID(),
+		InstanceID:   instanceID,
 		ProductID:    req.ProductID,
 		Version:      req.Version,
-		RegisteredAt: time.Now().Format(time.RFC3339),
+		RegisteredAt: registeredAt.Format(time.RFC3339),
 		Message:      "Instance registered successfully",
 	})
 }
@@ -311,7 +325,27 @@ func (s *Server) handleInstanceClear(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.mu.Lock()
+	// Delete from old single-instance map
 	delete(s.clients, req.ProductID)
+
+	// Delete from new multi-instance map if instanceID provided
+	if req.InstanceID != "" {
+		for key := range s.instances {
+			if s.instances[key].InstanceID == req.InstanceID {
+				delete(s.instances, key)
+				delete(s.instanceKeys, key)
+				break
+			}
+		}
+	} else {
+		// If no instanceID, delete all instances for this product
+		for key := range s.instances {
+			if s.instances[key].ProductID == req.ProductID {
+				delete(s.instances, key)
+				delete(s.instanceKeys, key)
+			}
+		}
+	}
 	s.mu.Unlock()
 
 	_ = json.NewEncoder(w).Encode(&ClearInstanceResponse{
@@ -360,4 +394,26 @@ func (s *Server) handleInstanceGenerateKeys(w http.ResponseWriter, r *http.Reque
 		PrivateKey: privateKeyPEM,
 		Message:    "Keys generated successfully",
 	})
+}
+
+// List all registered instances
+type ListInstancesResponse struct {
+	Instances []Instance `json:"instances"`
+}
+
+func (s *Server) handleListInstances(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	s.mu.RLock()
+	instances := make([]Instance, 0, len(s.instances))
+	for _, inst := range s.instances {
+		instances = append(instances, *inst)
+	}
+	s.mu.RUnlock()
+
+	_ = json.NewEncoder(w).Encode(&ListInstancesResponse{Instances: instances})
 }
