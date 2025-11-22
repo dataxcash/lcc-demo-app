@@ -19,7 +19,10 @@ const SetupPage = {
                 </div>
 
                 <div class="card mb-4">
-                    <h3 class="card-title">Step 1: Select Product</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                        <h3 class="card-title" style="margin: 0;">Step 1: Select Product</h3>
+                        <button id="btn-view-instances" class="btn btn-secondary" style="font-size: var(--text-sm);">📊 View All Instances</button>
+                    </div>
                     <p style="color: var(--text-muted); margin-bottom: var(--space-4);">
                         Choose which product you want to register an SDK instance for:
                     </p>
@@ -30,6 +33,15 @@ const SetupPage = {
                             <option value="">-- Loading products... --</option>
                         </select>
                         <button id="btn-load-products" class="btn btn-secondary">Refresh Products</button>
+                    </div>
+                    
+                    <!-- Multi-Instance Panel -->
+                    <div id="instances-panel" class="hidden" style="margin-top: var(--space-4); padding: var(--space-4); background: var(--bg-soft); border-radius: var(--radius); border: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                            <h4 style="color: var(--text-secondary); margin: 0;">📋 Registered Instances</h4>
+                            <button id="btn-close-instances" class="btn btn-secondary" style="font-size: var(--text-sm);">Close</button>
+                        </div>
+                        <div id="instances-list" style="max-height: 400px; overflow-y: auto;"></div>
                     </div>
 
                     <div id="product-info" class="hidden" style="background: var(--bg-soft); padding: var(--space-4); border-radius: var(--radius); margin-top: var(--space-4);">
@@ -265,6 +277,13 @@ log.Printf("Registered: %s", instanceID)</pre>
 
         const btnUseSavedKeys = document.getElementById('btn-use-saved-keys');
         btnUseSavedKeys.addEventListener('click', () => this.useSavedKeys());
+
+        // Multi-instance buttons
+        const btnViewInstances = document.getElementById('btn-view-instances');
+        btnViewInstances.addEventListener('click', () => this.viewAllInstances());
+
+        const btnCloseInstances = document.getElementById('btn-close-instances');
+        btnCloseInstances.addEventListener('click', () => this.closeInstancesPanel());
     },
 
     handleProductSelect() {
@@ -469,5 +488,76 @@ log.Printf("Registered: %s", instanceID)</pre>
             </div>
         `;
         Utils.showAlert('info', 'Will use saved keys if available');
+    },
+
+    async viewAllInstances() {
+        try {
+            const response = await Utils.fetchAPI('/api/instances');
+            const instances = response.instances || [];
+            
+            const panel = document.getElementById('instances-panel');
+            const list = document.getElementById('instances-list');
+            
+            if (instances.length === 0) {
+                list.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: var(--space-4);">No instances registered yet</div>';
+            } else {
+                list.innerHTML = instances.map(inst => `
+                    <div style="background: var(--bg); padding: var(--space-3); border-radius: var(--radius); margin-bottom: var(--space-2); border-left: 3px solid var(--accent);">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-2); color: var(--text-primary);">
+                            <div>
+                                <div style="font-size: var(--text-sm); color: var(--text-muted);">Instance ID</div>
+                                <div style="font-family: var(--font-mono); font-size: var(--text-sm); color: var(--accent); word-break: break-all;">${inst.instance_id.substring(0, 16)}...</div>
+                            </div>
+                            <div>
+                                <div style="font-size: var(--text-sm); color: var(--text-muted);">Product</div>
+                                <div style="font-weight: var(--weight-medium);">${inst.product_id}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: var(--text-sm); color: var(--text-muted);">Version</div>
+                                <div>${inst.version}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: var(--text-sm); color: var(--text-muted);">Registered</div>
+                                <div style="font-size: var(--text-sm);">${new Date(inst.registered_at).toLocaleString()}</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: var(--space-2); display: flex; gap: var(--space-2);">
+                            <button class="btn btn-secondary" style="font-size: var(--text-sm); padding: 4px 8px;" onclick="SetupPage.deleteInstance('${inst.product_id}', '${inst.instance_id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            panel.classList.remove('hidden');
+        } catch (error) {
+            Utils.showAlert('error', `Failed to load instances: ${error.message}`);
+        }
+    },
+
+    closeInstancesPanel() {
+        document.getElementById('instances-panel').classList.add('hidden');
+    },
+
+    async deleteInstance(productId, instanceId) {
+        if (!confirm('Are you sure you want to delete this instance?')) return;
+        
+        try {
+            const response = await Utils.fetchAPI('/api/instance/clear', {
+                method: 'POST',
+                body: JSON.stringify({
+                    product_id: productId,
+                    instance_id: instanceId
+                })
+            });
+
+            if (response.success) {
+                Utils.showAlert('success', 'Instance deleted successfully');
+                await this.viewAllInstances(); // Refresh list
+            } else {
+                throw new Error(response.error || 'Delete failed');
+            }
+        } catch (error) {
+            Utils.showAlert('error', `Failed to delete instance: ${error.message}`);
+        }
     }
 };
