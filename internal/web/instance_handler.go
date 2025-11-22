@@ -336,10 +336,28 @@ func (s *Server) handleInstanceGenerateKeys(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	publicKeyPEM, err := kp.GetPublicKeyPEM()
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(&GenerateKeysResponse{
+			Success: false,
+			Error:   fmt.Sprintf("failed to export public key: %v", err),
+		})
+		return
+	}
+
+	privateKeyPEM, err := kp.ExportPrivateKeyPEM()
+	if err != nil {
+		_ = json.NewEncoder(w).Encode(&GenerateKeysResponse{
+			Success: false,
+			Error:   fmt.Sprintf("failed to export private key: %v", err),
+		})
+		return
+	}
+
 	_ = json.NewEncoder(w).Encode(&GenerateKeysResponse{
 		Success:    true,
-		PublicKey:  kp.PublicKeyPEM,
-		PrivateKey: kp.PrivateKeyPEM,
+		PublicKey:  publicKeyPEM,
+		PrivateKey: privateKeyPEM,
 		Message:    "Keys generated successfully",
 	})
 }
