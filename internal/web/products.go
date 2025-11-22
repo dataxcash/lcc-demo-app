@@ -12,24 +12,14 @@ type TierDefinition struct {
 }
 
 // FeatureInfo contains details about a feature in a tier
+// Note: Limits are now product-level, not feature-level
 type FeatureInfo struct {
-	ID             string  `json:"id"`
-	Name           string  `json:"name"`
-	Enabled        bool    `json:"enabled"`
-	Description    string  `json:"description,omitempty"`
-	RequiredTier   string  `json:"required_tier,omitempty"`
-	Reason         string  `json:"reason,omitempty"`
-	Quota          *Quota  `json:"quota,omitempty"`
-	MaxTPS         float64 `json:"max_tps,omitempty"`
-	MaxCapacity    int     `json:"max_capacity,omitempty"`
-	MaxConcurrency int     `json:"max_concurrency,omitempty"`
-}
-
-// Quota represents quota configuration for a feature
-type Quota struct {
-	Max      int    `json:"max"`
-	Window   string `json:"window"`
-	ResetAt  string `json:"reset_at"`
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Enabled      bool   `json:"enabled"`
+	Description  string `json:"description,omitempty"`
+	RequiredTier string `json:"required_tier,omitempty"`
+	Reason       string `json:"reason,omitempty"`
 }
 
 var (
@@ -120,24 +110,12 @@ func initializeTiers() {
 				Name:        "ML Analytics",
 				Enabled:     true,
 				Description: "ML-powered analytics with predictive models",
-				Quota: &Quota{
-					Max:     10000,
-					Window:  "daily",
-					ResetAt: "00:00",
-				},
-				MaxTPS: 10.0,
 			},
 			"pdf_export": {
 				ID:          "pdf_export",
 				Name:        "PDF Export",
 				Enabled:     true,
 				Description: "Professional quality PDF reports",
-				Quota: &Quota{
-					Max:     200,
-					Window:  "daily",
-					ResetAt: "00:00",
-				},
-				MaxTPS: 5.0,
 			},
 			"excel_export": {
 				ID:           "excel_export",
@@ -156,12 +134,10 @@ func initializeTiers() {
 				Reason:       "requires_enterprise",
 			},
 			"api_access": {
-				ID:             "api_access",
-				Name:           "API Access",
-				Enabled:        true,
-				Description:    "REST API access",
-				MaxTPS:         100.0,
-				MaxConcurrency: 10,
+				ID:          "api_access",
+				Name:        "API Access",
+				Enabled:     true,
+				Description: "REST API access",
 			},
 		},
 	}
@@ -185,51 +161,30 @@ func initializeTiers() {
 				Name:        "ML Analytics",
 				Enabled:     true,
 				Description: "ML-powered analytics with predictive models",
-				Quota: &Quota{
-					Max:     100000,
-					Window:  "daily",
-					ResetAt: "00:00",
-				},
-				MaxTPS: 50.0,
 			},
 			"pdf_export": {
 				ID:          "pdf_export",
 				Name:        "PDF Export",
 				Enabled:     true,
 				Description: "Professional quality PDF reports",
-				Quota: &Quota{
-					Max:     2000,
-					Window:  "daily",
-					ResetAt: "00:00",
-				},
-				MaxTPS: 20.0,
 			},
 			"excel_export": {
 				ID:          "excel_export",
 				Name:        "Excel Export",
 				Enabled:     true,
 				Description: "Advanced Excel exports with templates",
-				Quota: &Quota{
-					Max:     1000,
-					Window:  "daily",
-					ResetAt: "00:00",
-				},
-				MaxTPS: 10.0,
 			},
 			"custom_dashboard": {
 				ID:          "custom_dashboard",
 				Name:        "Custom Dashboard",
 				Enabled:     true,
 				Description: "Build custom dashboards",
-				MaxCapacity: 100,
 			},
 			"api_access": {
-				ID:             "api_access",
-				Name:           "API Access",
-				Enabled:        true,
-				Description:    "REST API access",
-				MaxTPS:         500.0,
-				MaxConcurrency: 50,
+				ID:          "api_access",
+				Name:        "API Access",
+				Enabled:     true,
+				Description: "REST API access",
 			},
 		},
 	}
@@ -312,13 +267,29 @@ func GetLicenseJSON(tier *TierDefinition) map[string]interface{} {
 	}
 }
 
-// GetYAMLConfig returns the YAML configuration template for a tier
+// GetYAMLConfig returns the YAML configuration template showing zero-intrusion design
 func GetYAMLConfig() string {
 	return `sdk:
   product_id: data-insight-pro
   product_version: "1.0.0"
   lcc_url: "http://localhost:7086"
 
+# Product-level limits (shared by all features)
+limits:
+  quota:
+    max: 50000
+    window: monthly
+    consumer: GetConsumeAmount  # Optional: custom consumption calculator
+  
+  max_tps: 100.0
+  tps_provider: GetCurrentTPS  # Optional: custom TPS measurement
+  
+  max_capacity: 100
+  capacity_counter: GetCurrentProjectCount  # Required: current usage counter
+  
+  max_concurrency: 10
+
+# Features (only define interception points)
 features:
   - id: basic_reports
     name: Basic Statistical Reports
@@ -327,7 +298,7 @@ features:
       function: GenerateBasicReport
     on_deny:
       action: error
-      message: "Report generation failed"
+      message: "Report generation requires valid license"
 
   - id: ml_analytics
     name: ML-Powered Analytics

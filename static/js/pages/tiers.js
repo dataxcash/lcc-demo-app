@@ -125,11 +125,12 @@ func ExportToExcel(reportID string) error {
                     <h3 class="card-title">📝 Key Concepts</h3>
                     <ul style="list-style: none; padding: 0; color: var(--text-primary);">
                         <li style="margin-bottom: var(--space-2);">• <strong>Tier</strong> = Customer segment (Basic/Pro/Enterprise)</li>
-                        <li style="margin-bottom: var(--space-2);">• <strong>Feature ID</strong> = Unique identifier (e.g., "excel_export")</li>
-                        <li style="margin-bottom: var(--space-2);">• <strong>CheckFeature()</strong> = SDK API to gate business logic</li>
+                        <li style="margin-bottom: var(--space-2);">• <strong>Feature ID</strong> = Unique identifier for interception point</li>
+                        <li style="margin-bottom: var(--space-2);">• <strong>Product-level Limits</strong> = Shared limits pool for all features</li>
+                        <li style="margin-bottom: var(--space-2);">• <strong>Zero-Intrusion</strong> = No license code in business logic</li>
+                        <li style="margin-bottom: var(--space-2);">• <strong>Helper Functions</strong> = Optional/required custom logic (quota, TPS, capacity)</li>
                         <li style="margin-bottom: var(--space-2);">• <strong>License file</strong> = Server-managed, ISV applies to customer</li>
-                        <li style="margin-bottom: var(--space-2);">• <strong>YAML config</strong> = Developer-defined, compiled into app</li>
-                        <li style="margin-bottom: var(--space-2);">• <strong>Enabled flag</strong> = Authoritative control from license</li>
+                        <li style="margin-bottom: var(--space-2);">• <strong>YAML config</strong> = Defines limits + interception + helpers</li>
                     </ul>
                 </div>
             </div>
