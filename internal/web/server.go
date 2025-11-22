@@ -399,67 +399,64 @@ func (s *Server) getClient(productID string) (*lccclient.Client, error) {
 
 // --- Simulation handlers ---
 
-type consumeReq struct { FeatureID string `json:"feature_id"`; Amount int `json:"amount"` }
-type consumeResp struct { Allowed bool `json:"allowed"`; Remaining int `json:"remaining"`; Reason string `json:"reason"` }
+type consumeReq struct { Amount int `json:"amount"` }
+type consumeResp struct { Allowed bool `json:"allowed"`; Remaining int `json:"remaining"` }
 
 func (s *Server) handleConsume(cli *lccclient.Client, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost { w.WriteHeader(http.StatusMethodNotAllowed); return }
 	var req consumeReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeErr(w, http.StatusBadRequest, fmt.Errorf("invalid json: %w", err)); return }
-	if req.FeatureID == "" || req.Amount <= 0 { writeErr(w, http.StatusBadRequest, fmt.Errorf("feature_id and positive amount required")); return }
-	allowed, remaining, reason, err := cli.Consume(req.FeatureID, req.Amount, nil)
+	if req.Amount <= 0 { writeErr(w, http.StatusBadRequest, fmt.Errorf("positive amount required")); return }
+	allowed, remaining, err := cli.Consume(req.Amount)
 	if err != nil { writeErr(w, http.StatusBadGateway, err); return }
-	_ = json.NewEncoder(w).Encode(&consumeResp{Allowed: allowed, Remaining: remaining, Reason: reason})
+	_ = json.NewEncoder(w).Encode(&consumeResp{Allowed: allowed, Remaining: remaining})
 }
 
-type tpsReq struct { FeatureID string `json:"feature_id"`; TPS float64 `json:"tps"` }
-type tpsResp struct { Allowed bool `json:"allowed"`; Max float64 `json:"max"`; Reason string `json:"reason"` }
+type tpsResp struct { Allowed bool `json:"allowed"`; Max float64 `json:"max"` }
 
 func (s *Server) handleTPSCheck(cli *lccclient.Client, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost { w.WriteHeader(http.StatusMethodNotAllowed); return }
-	var req tpsReq
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeErr(w, http.StatusBadRequest, fmt.Errorf("invalid json: %w", err)); return }
-	if req.FeatureID == "" { writeErr(w, http.StatusBadRequest, fmt.Errorf("feature_id required")); return }
-	allowed, max, reason, err := cli.CheckTPS(req.FeatureID, req.TPS)
+	allowed, max, err := cli.CheckTPS()
 	if err != nil { writeErr(w, http.StatusBadGateway, err); return }
-	_ = json.NewEncoder(w).Encode(&tpsResp{Allowed: allowed, Max: max, Reason: reason})
+	_ = json.NewEncoder(w).Encode(&tpsResp{Allowed: allowed, Max: max})
 }
 
-type capacityReq struct { FeatureID string `json:"feature_id"`; Current int `json:"current"` }
-type capacityResp struct { Allowed bool `json:"allowed"`; Max int `json:"max"`; Reason string `json:"reason"` }
+type capacityReq struct { Current int `json:"current"` }
+type capacityResp struct { Allowed bool `json:"allowed"`; Max int `json:"max"` }
 
 func (s *Server) handleCapacityCheck(cli *lccclient.Client, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost { w.WriteHeader(http.StatusMethodNotAllowed); return }
 	var req capacityReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeErr(w, http.StatusBadRequest, fmt.Errorf("invalid json: %w", err)); return }
-	if req.FeatureID == "" { writeErr(w, http.StatusBadRequest, fmt.Errorf("feature_id required")); return }
-	allowed, max, reason, err := cli.CheckCapacity(req.FeatureID, req.Current)
+	allowed, max, err := cli.CheckCapacity(req.Current)
 	if err != nil { writeErr(w, http.StatusBadGateway, err); return }
-	_ = json.NewEncoder(w).Encode(&capacityResp{Allowed: allowed, Max: max, Reason: reason})
+	_ = json.NewEncoder(w).Encode(&capacityResp{Allowed: allowed, Max: max})
 }
 
-type concurrencyReq struct { FeatureID string `json:"feature_id"`; Slots int `json:"slots"`; HoldMS int `json:"hold_ms"`; Mode string `json:"mode"` }
+type concurrencyReq struct { Slots int `json:"slots"`; HoldMS int `json:"hold_ms"`; Mode string `json:"mode"` }
 type concurrencyResp struct { Accepted int `json:"accepted"`; Denied int `json:"denied"`; ReasonStats map[string]int `json:"reason_stats,omitempty"` }
 
 func (s *Server) handleConcurrency(cli *lccclient.Client, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost { w.WriteHeader(http.StatusMethodNotAllowed); return }
 	var req concurrencyReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeErr(w, http.StatusBadRequest, fmt.Errorf("invalid json: %w", err)); return }
-	if req.FeatureID == "" || req.Slots <= 0 { writeErr(w, http.StatusBadRequest, fmt.Errorf("feature_id and positive slots required")); return }
+	if req.Slots <= 0 { writeErr(w, http.StatusBadRequest, fmt.Errorf("positive slots required")); return }
 	mode := req.Mode
 	if mode == "" { mode = "check-only" }
 	reasonStats := map[string]int{}
 	accepted, denied := 0, 0
 	switch mode {
 	case "signal-only":
-		// lightweight signal via usage report
-		if err := cli.ReportUsage(req.FeatureID, float64(req.Slots)); err != nil { writeErr(w, http.StatusBadGateway, err); return }
-		accepted = req.Slots
+		// lightweight signal via usage report (product-level)
+		allowed, _, err := cli.Consume(req.Slots)
+		if err != nil { writeErr(w, http.StatusBadGateway, err); return }
+		if allowed { accepted = req.Slots } else { denied = req.Slots }
 	case "check-only":
+		// Check product-level limits for each slot
 		for i := 0; i < req.Slots; i++ {
-			st, err := cli.CheckFeature(req.FeatureID)
+			allowed, _, err := cli.Consume(1)
 			if err != nil { reasonStats["error"]++; denied++; continue }
-			if st.Enabled { accepted++ } else { denied++; reasonStats[st.Reason]++ }
+			if allowed { accepted++ } else { denied++; reasonStats["quota_exceeded"]++ }
 		}
 	case "local-lock":
 		hold := time.Duration(req.HoldMS) * time.Millisecond
@@ -469,9 +466,9 @@ func (s *Server) handleConcurrency(cli *lccclient.Client, w http.ResponseWriter,
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				release, ok, reason, err := cli.AcquireSlot(req.FeatureID, nil)
+				release, ok, err := cli.AcquireSlot()
 				if err != nil { s.mu.Lock(); reasonStats["error"]++; denied++; s.mu.Unlock(); return }
-				if !ok { s.mu.Lock(); reasonStats[reason]++; denied++; s.mu.Unlock(); return }
+				if !ok { s.mu.Lock(); reasonStats["concurrency_exceeded"]++; denied++; s.mu.Unlock(); return }
 				time.Sleep(hold)
 				release()
 				s.mu.Lock(); accepted++; s.mu.Unlock()

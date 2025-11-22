@@ -1,6 +1,6 @@
 .PHONY: all generate build run run-dev test clean regression \
 	build-basic build-pro build-ent generate-basic generate-pro generate-ent \
-	demo build-demo run-demo
+	demo build-demo run-demo stop
 
 FEATURES_BASIC := configs/lcc-features.basic.yaml
 FEATURES_PRO   := configs/lcc-features.pro.yaml
@@ -85,7 +85,12 @@ deps:
 
 # --- Web Demo ---
 
-demo: run-demo
+stop:
+	@echo "Stopping all lcc-demo-app processes..."
+	@./scripts/stop.sh
+	@echo "All demo processes stopped."
+
+demo: stop run-demo
 
 build-demo:
 	@echo "Building web demo..."
@@ -94,4 +99,4 @@ build-demo:
 run-demo: build-demo
 	@echo "Starting LCC Web Demo..."
 	@echo "Navigate to http://localhost:9144"
-	@./bin/web
+	@./bin/web &
